@@ -1,4 +1,17 @@
 #!/bin/bash
+: <<'end_header_info'
+(c) Andrey Prokopenko job@terem.fr
+fully automatic, unattended script to install Debian 10 with ZFS root on Hetzner VPS
+How to use: add SSH key to the rescue console, set it OS to linux64, then press mount rescue and power sysle
+Next, connect via SSH to console and run the script via 
+wget -qO- https://raw.githubusercontent.com/andrey42/zfs-hetzner-vm/master/hetzner-vps-debian10-setup.sh | bash -
+Answer script questions about desired hostname and ZFS ARC cache size
+To cope with network failures its higly recommended to run the script inside screen console
+screen -dmS zfs
+screen -r zfs
+To detach from screen console, hit Ctrl-d then a
+end_header_info
+
 
 set -o errexit
 set -o pipefail
@@ -8,9 +21,16 @@ function chroot_execute {
   chroot /mnt bash -c "$1"
 }
 
+
 export LANG=en_US.UTF-8
 export LANGUAGE=en_US.UTF-8
 update-locale LANG=en_US.UTF-8 LANGUAGE=en_US:en
+
+read -p "Enter desired hostname [terem]: " v_hostname
+v_hostname=${v_hostname:-terem}
+
+read -p "Enter desired ZFS ARC max cache size in bytes [250000000]: " v_zfs_arc_max
+v_zfs_arc_max=${v_zfs_arc_max:-250000000}
 
 echo "======= installing zfs on rescue system =========="
 echo "zfs-dkms zfs-dkms/note-incompatible-licenses note true" | debconf-set-selections
@@ -77,7 +97,7 @@ zfs set devices=off rpool
 
 echo "======= setting up the network =========="
 
-echo terem > /mnt/etc/hostname
+echo $v_hostname > /mnt/etc/hostname
 
 cat > /mnt/etc/hosts <<CONF
 127.0.1.1 terem terem
@@ -224,7 +244,7 @@ chroot_execute "zfs set mountpoint=legacy rpool/tmp"
 chroot_execute "echo rpool/tmp /tmp zfs nodev,relatime 0 0 >> /etc/fstab"
 
 echo "========setting up zfs module parameters========"
-echo "options zfs zfs_arc_max=250000000" >> /etc/modprobe.d/zfs.conf
+echo "options zfs zfs_arc_max=$v_zfs_arc_max" >> /etc/modprobe.d/zfs.conf
 
 echo "======= update initramfs =========="
 chroot_execute "update-initramfs -u -k all"
