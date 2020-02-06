@@ -244,7 +244,7 @@ chroot_execute "zfs set mountpoint=legacy rpool/tmp"
 chroot_execute "echo rpool/tmp /tmp zfs nodev,relatime 0 0 >> /etc/fstab"
 
 echo "========setting up zfs module parameters========"
-echo "options zfs zfs_arc_max=$v_zfs_arc_max" >> /etc/modprobe.d/zfs.conf
+chroot_execute "echo options zfs zfs_arc_max=$v_zfs_arc_max >> /etc/modprobe.d/zfs.conf"
 
 echo "======= update initramfs =========="
 chroot_execute "update-initramfs -u -k all"
