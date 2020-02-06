@@ -92,6 +92,9 @@ ff02::2 ip6-allrouters
 ff02::3 ip6-allhosts
 CONF
 
+ip6addr_prefix=$(ip -6 a s | grep -E "inet6.+global" | sed -nE 's/.+inet6\s(([0-9a-z]{1,4}:){4,4}).+/\1/p')
+
+cp /mnt/etc/network/interfaces /mnt/etc/network/interfaces_original
 
 cat > "/mnt/etc/network/interfaces" <<CONF
 auto lo
@@ -104,13 +107,13 @@ iface ens3 inet dhcp
 
 # control-alias ens3
 iface ens3 inet6 static
-    address 2a01:4f8:c0c:7492::1/64
+    address ${ip6addr_prefix}:1/64
     gateway fe80::1
 CONF
 
 cp /etc/resolv.conf /mnt/etc/resolv.conf
 
-echo "======= preparing the jail =========="
+echo "======= preparing the jail for chroot =========="
 for virtual_fs_dir in proc sys dev; do
   mount --rbind "/$virtual_fs_dir" "/mnt/$virtual_fs_dir"
 done
@@ -246,7 +249,7 @@ chroot_execute "mkdir /etc/zfs/zfs-list.cache"
 chroot_execute "touch /etc/zfs/zfs-list.cache/rpool"
 chroot_execute "ln -s /usr/lib/zfs-linux/zed.d/history_event-zfs-list-cacher.sh /etc/zfs/zed.d/"
 
-echo "======= unmounting virtual filesystems =========="
+echo "======= unmounting virtual filesystems from jail =========="
 for virtual_fs_dir in dev sys proc; do
  umount --recursive --force --lazy "/mnt/$virtual_fs_dir"
 done
