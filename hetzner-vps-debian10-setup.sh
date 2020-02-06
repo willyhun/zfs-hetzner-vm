@@ -94,8 +94,6 @@ CONF
 
 ip6addr_prefix=$(ip -6 a s | grep -E "inet6.+global" | sed -nE 's/.+inet6\s(([0-9a-z]{1,4}:){4,4}).+/\1/p')
 
-cp /mnt/etc/network/interfaces /mnt/etc/network/interfaces_original
-
 cat > "/mnt/etc/network/interfaces" <<CONF
 auto lo
 iface lo inet loopback
