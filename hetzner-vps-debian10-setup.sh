@@ -63,11 +63,11 @@ zpool create -o ashift=12 \
 zfs create -o canmount=off -o mountpoint=none rpool/ROOT
 zfs create -o canmount=off -o mountpoint=none bpool/BOOT
 
-zfs create -o canmount=noauto -o mountpoint=/ rpool/ROOT/ubuntu
-zfs mount rpool/ROOT/ubuntu
+zfs create -o canmount=noauto -o mountpoint=/ rpool/ROOT/debian
+zfs mount rpool/ROOT/debian
 
-zfs create -o canmount=noauto -o mountpoint=/boot bpool/BOOT/ubuntu
-zfs mount bpool/BOOT/ubuntu
+zfs create -o canmount=noauto -o mountpoint=/boot bpool/BOOT/debian
+zfs mount bpool/BOOT/debian
 
 zfs create                                 rpool/home
 zfs create -o mountpoint=/root             rpool/home/root
@@ -257,7 +257,7 @@ echo "======= setting up grub =========="
 chroot_execute "grub-install $DISK"
 
 chroot_execute "sed -i 's/#GRUB_TERMINAL=console/GRUB_TERMINAL=console/g' /etc/default/grub"
-chroot_execute "sed -i 's|GRUB_CMDLINE_LINUX=\"\"|GRUB_CMDLINE_LINUX=\"root=ZFS=rpool/ROOT/ubuntu\"|g'  /etc/default/grub"
+chroot_execute "sed -i 's|GRUB_CMDLINE_LINUX=\"\"|GRUB_CMDLINE_LINUX=\"root=ZFS=rpool/ROOT/debian\"|g'  /etc/default/grub"
 
 chroot_execute "sed -i 's/quiet//g' /etc/default/grub"
 chroot_execute "sed -i 's/splash//g' /etc/default/grub"
