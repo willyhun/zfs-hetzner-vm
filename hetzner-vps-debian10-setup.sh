@@ -4,8 +4,7 @@
 fully automatic, unattended script to install Debian 10 with ZFS root on Hetzner VPS
 WARNING: all data on the disk will be destroyed
 How to use: add SSH key to the rescue console, set it OS to linux64, then press mount rescue and power sysle
-Next, connect via SSH to console and run the script via 
-wget -qO- https://raw.githubusercontent.com/andrey42/zfs-hetzner-vm/master/hetzner-vps-debian10-setup.sh | bash -
+Next, connect via SSH to console, and run the script 
 Answer script questions about desired hostname and ZFS ARC cache size
 To cope with network failures its higly recommended to run the script inside screen console
 screen -dmS zfs
