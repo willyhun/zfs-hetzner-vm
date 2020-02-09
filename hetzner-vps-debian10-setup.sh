@@ -263,7 +263,7 @@ echo "======= installing new kernel============="
 #chroot_execute "update-grub"
 #chroot_execute "apt install --yes -t buster-backports linux-image-amd64"
 #chroot_execute "apt install --yes -t buster-backports firmware-linux firmware-linux-nonfree"
-chroot_execute "apt install --yes linux-headers-4.19.0-6"
+chroot_execute "apt install --yes linux-headers-4.19.0-6-amd64"
 
 echo "======= installing zfs packages =========="
 chroot_execute 'echo "zfs-dkms zfs-dkms/note-incompatible-licenses note true" | debconf-set-selections'
