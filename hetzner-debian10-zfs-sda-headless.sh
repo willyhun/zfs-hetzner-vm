@@ -194,6 +194,10 @@ determine_kernel_variant
 
 clear
 
+
+#$v_installdisk=$(find  /dev/disk/by-id/ -exec sh -c  "readlink -nf {}  | grep -q ^/dev/sda$ && echo {}" \;)
+$v_installdisk=$(find  /dev/disk/by-id/ -exec sh -c  "readlink -nf {}  | grep -q ^${v_selected_disk}$ && echo {}" \;)
+
 echo "===========remove unused kernels in rescue system========="
 for kver in $(find /lib/modules/* -maxdepth 0 -type d | grep -v "$(uname -r)" | cut -s -d "/" -f 4); do
   apt purge --yes "linux-headers-$kver"
@@ -211,10 +215,10 @@ echo "======= installing zfs on rescue system =========="
   modprobe zfs
 
 echo "======= partitioning the disk =========="
-  wipefs --all "$v_selected_disk"
-  sgdisk -a1 -n1:24K:+1000K            -t1:EF02 "$v_selected_disk"
-  sgdisk -n2:0:+512M                   -t2:BF01 "$v_selected_disk" # Boot pool
-  sgdisk -n3:0:0                       -t3:BF01 "$v_selected_disk" # Root pool
+  wipefs --all "$v_installdisk"
+  sgdisk -a1 -n1:24K:+1000K            -t1:EF02 "$v_installdisk"
+  sgdisk -n2:0:+512M                   -t2:BF01 "$v_installdisk" # Boot pool
+  sgdisk -n3:0:0                       -t3:BF01 "$v_installdisk" # Root pool
 
 udevadm settle
 
@@ -226,8 +230,8 @@ echo "======= create zfs pools and datasets =========="
     encryption_options=(-O "encryption=aes-256-gcm" -O "keylocation=prompt" -O "keyformat=passphrase")
   fi
 
-  rpool_disks_partition=("${v_selected_disk}-part3")
-  bpool_disks_partition=("${v_selected_disk}-part2")
+  rpool_disks_partition=("${v_installdisk}-part3")
+  bpool_disks_partition=("${v_installdisk}-part2")
   
 
 zpool create \
