@@ -379,7 +379,6 @@ keyboard-configuration  keyboard-configuration/compose  select  No compose key
 keyboard-configuration  keyboard-configuration/unsupported_options      boolean true
 console-setup   console-setup/fontsize-fb47     select  8x16
 console-setup   console-setup/store_defaults_in_debconf_db      boolean true
-console-setup   console-setup/codeset47 select  . Combined - Latin; Slavic Cyrillic; Greek
 console-setup   console-setup/fontface47        select  Fixed
 console-setup   console-setup/fontsize  string  8x16
 console-setup   console-setup/charmap47 select  UTF-8
