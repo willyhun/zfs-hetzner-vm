@@ -183,6 +183,22 @@ function unmount_and_export_fs {
   fi
 }
 
+function get_install_disk {
+
+  local mounted_devices
+  local device_info
+
+  mounted_devices="$(df | awk 'BEGIN {getline} {print $1}' | xargs -n 1 lsblk -no pkname 2> /dev/null | sort -u || true)"
+  device_info="$(udevadm info --query=property "${v_selected_disk}")"
+  
+    if ! grep -q '^ID_TYPE=cd$' <<< "$device_info"; then
+      if ! grep -q "^${v_selected_disk}\$" <<< "$mounted_devices"; then
+        v_installdisk=$(find  /dev/disk/by-id/ -exec sh -c  "readlink -nf {}  | grep -q ^${v_selected_disk}$ && echo {}" \;)
+      fi
+    fi
+}
+
+
 #################### MAIN ################################
 export LC_ALL=en_US.UTF-8
 
@@ -192,11 +208,9 @@ activate_debug
 
 determine_kernel_variant
 
+get_install_disk
+
 clear
-
-
-#$v_installdisk=$(find  /dev/disk/by-id/ -exec sh -c  "readlink -nf {}  | grep -q ^/dev/sda$ && echo {}" \;)
-$v_installdisk=$(find  /dev/disk/by-id/ -exec sh -c  "readlink -nf {}  | grep -q ^${v_selected_disk}$ && echo {}" \;)
 
 echo "===========remove unused kernels in rescue system========="
 for kver in $(find /lib/modules/* -maxdepth 0 -type d | grep -v "$(uname -r)" | cut -s -d "/" -f 4); do
