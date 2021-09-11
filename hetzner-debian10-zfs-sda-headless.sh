@@ -384,8 +384,8 @@ console-setup   console-setup/fontsize  string  8x16
 console-setup   console-setup/charmap47 select  UTF-8
 console-setup   console-setup/fontsize-text47   select  8x16
 console-setup   console-setup/codesetcode       string  Uni2
-tzdata tzdata/Areas select "$v_tz_area"
-tzdata tzdata/Zones/Europe select "$v_tz_city"
+tzdata tzdata/Areas select "${v_tz_area}"
+tzdata tzdata/Zones/Europe select "${v_tz_city}"
 CONF'
 
 chroot_execute "DEBIAN_FRONTEND=noninteractive dpkg-reconfigure locales -f noninteractive"
