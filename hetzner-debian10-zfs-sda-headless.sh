@@ -393,7 +393,7 @@ echo -e "LC_ALL=en_US.UTF-8\nLANG=en_US.UTF-8\n" >> "$c_zfs_mount_dir/etc/enviro
 chroot_execute "apt install -qq --yes keyboard-configuration console-setup"
 chroot_execute "dpkg-reconfigure keyboard-configuration -f noninteractive"
 chroot_execute "dpkg-reconfigure console-setup -f noninteractive"
-chroot_execute "setupcon"
+# chroot_execute "setupcon"
 
 chroot_execute "rm -f /etc/localtime /etc/timezone"
 chroot_execute "dpkg-reconfigure tzdata -f noninteractive "
