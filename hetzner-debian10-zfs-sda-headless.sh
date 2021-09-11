@@ -465,7 +465,7 @@ chroot_execute "echo 'GRUB_DISABLE_OS_PROBER=true'   >> /etc/default/grub"
 if [[ $v_encrypt_rpool == "1" ]]; then
   echo "=========set up dropbear=============="
 
-  chroot_execute "DEBIAN_FRONTEND=noninteractive apt install --yes dropbear-initramfs"
+  chroot_execute "DEBIAN_FRONTEND=noninteractive apt install -qy dropbear-initramfs"
 
   cp /root/.ssh/authorized_keys "$c_zfs_mount_dir/etc/dropbear-initramfs/authorized_keys"
 
@@ -483,7 +483,7 @@ if [[ $v_encrypt_rpool == "1" ]]; then
 fi 
 
 echo "========running packages upgrade==========="
-chroot_execute "DEBIAN_FRONTEND=noninteractive apt upgrade --yes"
+chroot_execute "DEBIAN_FRONTEND=noninteractive apt upgrade -qy"
 
 #echo "===========add static route to initramfs via hook to add default routes due to  initramfs DHCP bug ========="
 # removed
