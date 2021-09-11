@@ -388,29 +388,29 @@ tzdata tzdata/Areas select "$v_tz_area"
 tzdata tzdata/Zones/Europe select "$v_tz_city"
 CONF'
 
-chroot_execute "dpkg-reconfigure locales -f noninteractive"
+chroot_execute "DEBIAN_FRONTEND=noninteractive dpkg-reconfigure locales -f noninteractive"
 echo -e "LC_ALL=en_US.UTF-8\nLANG=en_US.UTF-8\n" >> "$c_zfs_mount_dir/etc/environment"
-chroot_execute "apt install -qq --yes keyboard-configuration console-setup"
-chroot_execute "dpkg-reconfigure keyboard-configuration -f noninteractive"
-chroot_execute "dpkg-reconfigure console-setup -f noninteractive"
-# chroot_execute "setupcon"
+chroot_execute "DEBIAN_FRONTEND=noninteractive apt install -qq --yes keyboard-configuration console-setup"
+chroot_execute "DEBIAN_FRONTEND=noninteractive dpkg-reconfigure keyboard-configuration -f noninteractive"
+chroot_execute "DEBIAN_FRONTEND=noninteractive dpkg-reconfigure console-setup -f noninteractive"
+chroot_execute "setupcon"
 
 chroot_execute "rm -f /etc/localtime /etc/timezone"
-chroot_execute "dpkg-reconfigure tzdata -f noninteractive "
+chroot_execute "DEBIAN_FRONTEND=noninteractive dpkg-reconfigure tzdata -f noninteractive "
 
 echo "======= installing latest kernel============="
-chroot_execute "apt install --yes -t buster-backports linux-image${v_kernel_variant}-amd64 linux-headers${v_kernel_variant}-amd64"
-
+chroot_execute "DEBIAN_FRONTEND=noninteractive apt install --yes -t buster-backports linux-image${v_kernel_variant}-amd64 linux-headers${v_kernel_variant}-amd64"
+ 
 echo "======= installing aux packages =========="
-chroot_execute "apt install --yes man wget curl software-properties-common nano htop gnupg"
+chroot_execute "DEBIAN_FRONTEND=noninteractive apt install --yes man wget curl software-properties-common nano htop gnupg"
 
 echo "======= installing zfs packages =========="
 chroot_execute 'echo "zfs-dkms zfs-dkms/note-incompatible-licenses note true" | debconf-set-selections'
 
-chroot_execute "apt install --yes -t buster-backports zfs-initramfs zfs-dkms zfsutils-linux"
+chroot_execute "DEBIAN_FRONTEND=noninteractive apt install --yes -t buster-backports zfs-initramfs zfs-dkms zfsutils-linux"
 
 echo "======= installing OpenSSH and network tooling =========="
-chroot_execute "apt install --yes openssh-server net-tools"
+chroot_execute "DEBIAN_FRONTEND=noninteractive apt install --yes openssh-server net-tools"
 
 echo "======= setup OpenSSH  =========="
 mkdir -p "$c_zfs_mount_dir/root/.ssh/"
@@ -418,7 +418,7 @@ cp /root/.ssh/authorized_keys "$c_zfs_mount_dir/root/.ssh/authorized_keys"
 sed -i 's/#PasswordAuthentication yes/PasswordAuthentication no/g' "$c_zfs_mount_dir/etc/ssh/sshd_config"
 sed -i 's/#PubkeyAuthentication yes/PubkeyAuthentication yes/g' "$c_zfs_mount_dir/etc/ssh/sshd_config"
 chroot_execute "rm /etc/ssh/ssh_host_*"
-chroot_execute "dpkg-reconfigure openssh-server -f noninteractive"
+chroot_execute "DEBIAN_FRONTEND=noninteractive dpkg-reconfigure openssh-server -f noninteractive"
 
 echo "======= set root password =========="
 chroot_execute "echo root:$(printf "%q" "$v_root_password") | chpasswd"
@@ -462,7 +462,7 @@ chroot_execute "echo 'GRUB_DISABLE_OS_PROBER=true'   >> /etc/default/grub"
 if [[ $v_encrypt_rpool == "1" ]]; then
   echo "=========set up dropbear=============="
 
-  chroot_execute "apt install --yes dropbear-initramfs"
+  chroot_execute "DEBIAN_FRONTEND=noninteractive apt install --yes dropbear-initramfs"
 
   cp /root/.ssh/authorized_keys "$c_zfs_mount_dir/etc/dropbear-initramfs/authorized_keys"
 
@@ -480,7 +480,7 @@ if [[ $v_encrypt_rpool == "1" ]]; then
 fi 
 
 echo "========running packages upgrade==========="
-chroot_execute "apt upgrade --yes"
+chroot_execute "DEBIAN_FRONTEND=noninteractive apt upgrade --yes"
 
 #echo "===========add static route to initramfs via hook to add default routes due to  initramfs DHCP bug ========="
 # removed
