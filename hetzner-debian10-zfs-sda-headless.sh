@@ -203,10 +203,12 @@ done
 echo "======= installing zfs on rescue system =========="
   echo "zfs-dkms zfs-dkms/note-incompatible-licenses note true" | debconf-set-selections
 
+  wget -O - https://terem42.github.io/zfs-debian/apt_pub.gpg | apt-key add -
+  echo 'deb https://terem42.github.io/zfs-debian/public zfs-debian-experimental main' > /etc/apt/sources.list.d/zfs-experimental.list
   apt update
+  apt install -t zfs-debian-experimental --yes zfs-dkms zfsutils-linux 
   apt install --yes -t buster-backports libelf-dev zfs-dkms
   modprobe zfs
-  zfs --version
 
 echo "======= partitioning the disk =========="
   wipefs --all "$v_selected_disk"
