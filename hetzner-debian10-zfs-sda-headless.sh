@@ -20,20 +20,14 @@ v_tz_area="Europe"
 v_tz_city="Berlin"
 v_selected_disk="/dev/sda"
 v_swap_size=0
+v_zfs_mount_dir=/zfstarget
 
 # Constants
 c_deb_packages_repo=http://mirror.hetzner.de/debian/packages
 c_deb_security_repo=http://mirror.hetzner.de/debian/security
 
-c_default_zfs_arc_max_mb=250
-c_default_bpool_tweaks="-o ashift=12 -O compression=lz4"
-c_default_rpool_tweaks="-o ashift=12 -O acltype=posixacl -O compression=lz4 -O dnodesize=auto -O relatime=on -O xattr=sa -O normalization=formD"
-c_default_hostname="debian"
-c_zfs_mount_dir=/mnt
 c_log_dir=$(dirname "$(mktemp)")/zfs-hetzner-vm
 c_install_log=$c_log_dir/install.log
-c_lsb_release_log=$c_log_dir/lsb_release.log
-c_disks_log=$c_log_dir/disks.log
 
 function activate_debug {
   mkdir -p "$c_log_dir"
@@ -41,40 +35,6 @@ function activate_debug {
   exec 5> "$c_install_log"
   BASH_XTRACEFD="5"
   set -x
-}
-
-
-function print_variables {
-  for variable_name in "$@"; do
-    declare -n variable_reference="$variable_name"
-
-    echo -n "$variable_name:"
-
-    case "$(declare -p "$variable_name")" in
-    "declare -a"* )
-      for entry in "${variable_reference[@]}"; do
-        echo -n " \"$entry\""
-      done
-      ;;
-    "declare -A"* )
-      for key in "${!variable_reference[@]}"; do
-        echo -n " $key=\"${variable_reference[$key]}\""
-      done
-      ;;
-    * )
-      echo -n " $variable_reference"
-      ;;
-    esac
-
-    echo
-  done
-
-  echo
-}
-
-
-function store_os_distro_information {
-  lsb_release --all > "$c_lsb_release_log"
 }
 
 function check_prerequisites {
@@ -97,13 +57,13 @@ function initial_load_debian_zed_cache {
 
   local success=0
 
-  if [[ ! -e $c_zfs_mount_dir/etc/zfs/zfs-list.cache/rpool ]] || [[ -e $c_zfs_mount_dir/etc/zfs/zfs-list.cache/rpool && (( $(ls -l /$c_zfs_mount_dir/etc/zfs/zfs-list.cache/rpool 2> /dev/null | cut -d ' ' -f 5) == 0 )) ]]; then
+  if [[ ! -e $v_zfs_mount_dir/etc/zfs/zfs-list.cache/rpool ]] || [[ -e $v_zfs_mount_dir/etc/zfs/zfs-list.cache/rpool && (( $(ls -l /$v_zfs_mount_dir/etc/zfs/zfs-list.cache/rpool 2> /dev/null | cut -d ' ' -f 5) == 0 )) ]]; then
     chroot_execute "zfs set canmount=noauto rpool"
 
     SECONDS=0
 
     while (( SECONDS++ <= 120 )); do
-      if [[ -e $c_zfs_mount_dir/etc/zfs/zfs-list.cache/rpool ]] && (( "$(ls -l $c_zfs_mount_dir/etc/zfs/zfs-list.cache/rpool | cut -d ' ' -f 5)" > 0 )); then
+      if [[ -e $v_zfs_mount_dir/etc/zfs/zfs-list.cache/rpool ]] && (( "$(ls -l $v_zfs_mount_dir/etc/zfs/zfs-list.cache/rpool | cut -d ' ' -f 5)" > 0 )); then
         success=1
         break
       else
@@ -121,7 +81,7 @@ function initial_load_debian_zed_cache {
 
   chroot_execute "pkill zed"
 
-  sed -Ei "s|${c_zfs_mount_dir}/?|/|g" ${c_zfs_mount_dir}/etc/zfs/zfs-list.cache/rpool
+  sed -Ei "s|${v_zfs_mount_dir}/?|/|g" ${v_zfs_mount_dir}/etc/zfs/zfs-list.cache/rpool
 }
 
 
@@ -132,13 +92,13 @@ function determine_kernel_variant {
 }
 
 function chroot_execute {
-  chroot $c_zfs_mount_dir bash -c "$1"
+  chroot $v_zfs_mount_dir bash -c "$1"
 }
 
 function unmount_and_export_fs {
 
   for virtual_fs_dir in dev sys proc; do
-    umount --recursive --force --lazy "$c_zfs_mount_dir/$virtual_fs_dir"
+    umount --recursive --force --lazy "$v_zfs_mount_dir/$virtual_fs_dir"
   done
 
   local max_unmount_wait=5
@@ -147,7 +107,7 @@ function unmount_and_export_fs {
   SECONDS=0
 
   for virtual_fs_dir in dev sys proc; do
-    while mountpoint -q "$c_zfs_mount_dir/$virtual_fs_dir" && [[ $SECONDS -lt $max_unmount_wait ]]; do
+    while mountpoint -q "$v_zfs_mount_dir/$virtual_fs_dir" && [[ $SECONDS -lt $max_unmount_wait ]]; do
       sleep 0.5
       echo -n .
     done
@@ -156,9 +116,9 @@ function unmount_and_export_fs {
   echo
 
   for virtual_fs_dir in dev sys proc; do
-    if mountpoint -q "$c_zfs_mount_dir/$virtual_fs_dir"; then
-      echo "Re-issuing umount for $c_zfs_mount_dir/$virtual_fs_dir"
-      umount --recursive --force --lazy "$c_zfs_mount_dir/$virtual_fs_dir"
+    if mountpoint -q "$v_zfs_mount_dir/$virtual_fs_dir"; then
+      echo "Re-issuing umount for $v_zfs_mount_dir/$virtual_fs_dir"
+      umount --recursive --force --lazy "$v_zfs_mount_dir/$virtual_fs_dir"
     fi
   done
 
@@ -250,13 +210,13 @@ echo "======= create zfs pools and datasets =========="
 
 zpool create \
   $v_bpool_tweaks -O canmount=off -O devices=off \
-  -O mountpoint=/boot -R $c_zfs_mount_dir -f \
+  -O mountpoint=/boot -R $v_zfs_mount_dir -f \
   $v_bpool_name  "${bpool_disks_partition}"
 
 echo -n "$v_passphrase" | zpool create \
   $v_rpool_tweaks \
   "${encryption_options[@]}" \
-  -O mountpoint=/ -R $c_zfs_mount_dir -f \
+  -O mountpoint=/ -R $v_zfs_mount_dir -f \
   $v_rpool_name "${rpool_disks_partition}"
 
 zfs create -o canmount=off -o mountpoint=none "$v_rpool_name/ROOT"
@@ -277,7 +237,7 @@ zfs create                                 "$v_rpool_name/var/spool"
 
 zfs create -o com.sun:auto-snapshot=false  "$v_rpool_name/var/cache"
 zfs create -o com.sun:auto-snapshot=false  "$v_rpool_name/var/tmp"
-chmod 1777 "$c_zfs_mount_dir/var/tmp"
+chmod 1777 "$v_zfs_mount_dir/var/tmp"
 
 zfs create                                 "$v_rpool_name/srv"
 
@@ -287,7 +247,7 @@ zfs create                                 "$v_rpool_name/usr/local"
 zfs create                                 "$v_rpool_name/var/mail"
 
 zfs create -o com.sun:auto-snapshot=false -o canmount=on -o mountpoint=/tmp "$v_rpool_name/tmp"
-chmod 1777 "$c_zfs_mount_dir/tmp"
+chmod 1777 "$v_zfs_mount_dir/tmp"
 
 if [[ $v_swap_size -gt 0 ]]; then
   zfs create \
@@ -301,15 +261,15 @@ if [[ $v_swap_size -gt 0 ]]; then
 fi
 
 echo "======= setting up initial system packages =========="
-debootstrap --arch=amd64 buster "$c_zfs_mount_dir" "$c_deb_packages_repo" 
+debootstrap --arch=amd64 buster "$v_zfs_mount_dir" "$c_deb_packages_repo" 
 
 zfs set devices=off "$v_rpool_name"
 
 echo "======= setting up the network =========="
 
-echo "$v_hostname" > $c_zfs_mount_dir/etc/hostname
+echo "$v_hostname" > $v_zfs_mount_dir/etc/hostname
 
-cat > "$c_zfs_mount_dir/etc/hosts" <<CONF
+cat > "$v_zfs_mount_dir/etc/hosts" <<CONF
 127.0.1.1 ${v_hostname}
 127.0.0.1 localhost
 
@@ -324,7 +284,7 @@ CONF
 
 ip6addr_prefix=$(ip -6 a s | grep -E "inet6.+global" | sed -nE 's/.+inet6\s(([0-9a-z]{1,4}:){4,4}).+/\1/p')
 
-cat <<CONF > /mnt/etc/systemd/network/10-eth0.network
+cat <<CONF > "${v_zfs_mount_dir}/etc/systemd/network/10-eth0.network"
 [Match]
 Name=eth0
 
@@ -336,26 +296,26 @@ CONF
 chroot_execute "systemctl enable systemd-networkd.service"
 
 
-cp /etc/resolv.conf $c_zfs_mount_dir/etc/resolv.conf
+cp /etc/resolv.conf $v_zfs_mount_dir/etc/resolv.conf
 
 echo "======= preparing the jail for chroot =========="
 for virtual_fs_dir in proc sys dev; do
-  mount --rbind "/$virtual_fs_dir" "$c_zfs_mount_dir/$virtual_fs_dir"
+  mount --rbind "/$virtual_fs_dir" "$v_zfs_mount_dir/$virtual_fs_dir"
 done
 
 echo "======= setting apt repos =========="
-cat > "$c_zfs_mount_dir/etc/apt/sources.list" <<CONF
-deb [arch=i386,amd64] $c_deb_packages_repo buster main contrib non-free
-deb [arch=i386,amd64] $c_deb_packages_repo buster-updates main contrib non-free
-deb [arch=i386,amd64] $c_deb_packages_repo buster-backports main contrib non-free
-deb [arch=i386,amd64] $c_deb_security_repo buster/updates main contrib non-free
+cat > "$v_zfs_mount_dir/etc/apt/sources.list" <<CONF
+deb [arch=amd64] $c_deb_packages_repo buster main contrib non-free
+deb [arch=amd64] $c_deb_packages_repo buster-updates main contrib non-free
+deb [arch=amd64] $c_deb_packages_repo buster-backports main contrib non-free
+deb [arch=amd64] $c_deb_security_repo buster/updates main contrib non-free
 CONF
 
-chroot_execute "apt update"
+chroot_execute "DEBIAN_FRONTEND=noninteractive apt -qy update"
 
 echo "======= setting locale, console and language =========="
-chroot_execute "apt install --yes -qq locales debconf-i18n apt-utils"
-sed -i 's/# en_US.UTF-8/en_US.UTF-8/' "$c_zfs_mount_dir/etc/locale.gen"
+chroot_execute "DEBIAN_FRONTEND=noninteractive  apt install --yes -qq locales debconf-i18n apt-utils"
+sed -i 's/# en_US.UTF-8/en_US.UTF-8/' "$v_zfs_mount_dir/etc/locale.gen"
 
 chroot_execute "cat <<CONF | debconf-set-selections
 locales locales/default_environment_locale      select  en_US.UTF-8
@@ -388,11 +348,8 @@ tzdata tzdata/Areas select ${v_tz_area}
 tzdata tzdata/Zones/Europe select ${v_tz_city} 
 CONF"
 
-#chroot_execute echo "tzdata tzdata/Areas select ${v_tz_area}"  | debconf-set-selections
-#chroot_execute echo "tzdata tzdata/Zones/Europe select ${v_tz_city}" | debconf-set-selections
-
 chroot_execute "DEBIAN_FRONTEND=noninteractive dpkg-reconfigure locales -f noninteractive"
-echo -e "LC_ALL=en_US.UTF-8\nLANG=en_US.UTF-8\n" >> "$c_zfs_mount_dir/etc/environment"
+echo -e "LC_ALL=en_US.UTF-8\nLANG=en_US.UTF-8\n" >> "$v_zfs_mount_dir/etc/environment"
 chroot_execute "DEBIAN_FRONTEND=noninteractive apt install -qq --yes keyboard-configuration console-setup"
 chroot_execute "DEBIAN_FRONTEND=noninteractive dpkg-reconfigure keyboard-configuration -f noninteractive"
 chroot_execute "DEBIAN_FRONTEND=noninteractive dpkg-reconfigure console-setup -f noninteractive"
@@ -416,10 +373,10 @@ echo "======= installing OpenSSH and network tooling =========="
 chroot_execute "DEBIAN_FRONTEND=noninteractive apt install -yq openssh-server net-tools"
 
 echo "======= setup OpenSSH  =========="
-mkdir -p "$c_zfs_mount_dir/root/.ssh/"
-cp /root/.ssh/authorized_keys "$c_zfs_mount_dir/root/.ssh/authorized_keys"
-sed -i 's/#PasswordAuthentication yes/PasswordAuthentication no/g' "$c_zfs_mount_dir/etc/ssh/sshd_config"
-sed -i 's/#PubkeyAuthentication yes/PubkeyAuthentication yes/g' "$c_zfs_mount_dir/etc/ssh/sshd_config"
+mkdir -p "$v_zfs_mount_dir/root/.ssh/"
+cp /root/.ssh/authorized_keys "$v_zfs_mount_dir/root/.ssh/authorized_keys"
+sed -i 's/#PasswordAuthentication yes/PasswordAuthentication no/g' "$v_zfs_mount_dir/etc/ssh/sshd_config"
+sed -i 's/#PubkeyAuthentication yes/PubkeyAuthentication yes/g' "$v_zfs_mount_dir/etc/ssh/sshd_config"
 chroot_execute "rm /etc/ssh/ssh_host_*"
 chroot_execute "DEBIAN_FRONTEND=noninteractive dpkg-reconfigure openssh-server -f noninteractive"
 
@@ -467,26 +424,23 @@ if [[ $v_encrypt_rpool == "1" ]]; then
 
   chroot_execute "DEBIAN_FRONTEND=noninteractive apt install -qy dropbear-initramfs"
 
-  cp /root/.ssh/authorized_keys "$c_zfs_mount_dir/etc/dropbear-initramfs/authorized_keys"
+  cp /root/.ssh/authorized_keys "$v_zfs_mount_dir/etc/dropbear-initramfs/authorized_keys"
 
-  cp "$c_zfs_mount_dir/etc/ssh/ssh_host_rsa_key" "$c_zfs_mount_dir/etc/ssh/ssh_host_rsa_key_temp"
+  cp "$v_zfs_mount_dir/etc/ssh/ssh_host_rsa_key" "$v_zfs_mount_dir/etc/ssh/ssh_host_rsa_key_temp"
   chroot_execute "ssh-keygen -p -i -m pem -N '' -f /etc/ssh/ssh_host_rsa_key_temp"
   chroot_execute "/usr/lib/dropbear/dropbearconvert openssh dropbear /etc/ssh/ssh_host_rsa_key_temp /etc/dropbear-initramfs/dropbear_rsa_host_key"
-  rm -rf "$c_zfs_mount_dir/etc/ssh/ssh_host_rsa_key_temp"
+  rm -rf "$v_zfs_mount_dir/etc/ssh/ssh_host_rsa_key_temp"
 
-  cp "$c_zfs_mount_dir/etc/ssh/ssh_host_ecdsa_key" "$c_zfs_mount_dir/etc/ssh/ssh_host_ecdsa_key_temp"
+  cp "$v_zfs_mount_dir/etc/ssh/ssh_host_ecdsa_key" "$v_zfs_mount_dir/etc/ssh/ssh_host_ecdsa_key_temp"
   chroot_execute "ssh-keygen -p -i -m pem -N '' -f /etc/ssh/ssh_host_ecdsa_key_temp"
   chroot_execute "/usr/lib/dropbear/dropbearconvert openssh dropbear /etc/ssh/ssh_host_ecdsa_key_temp /etc/dropbear-initramfs/dropbear_ecdsa_host_key"
   chroot_execute "rm -rf /etc/ssh/ssh_host_ecdsa_key_temp"
 
-  rm -rf "$c_zfs_mount_dir/etc/dropbear-initramfs/dropbear_dss_host_key"
+  rm -rf "$v_zfs_mount_dir/etc/dropbear-initramfs/dropbear_dss_host_key"
 fi 
 
 echo "========running packages upgrade==========="
 chroot_execute "DEBIAN_FRONTEND=noninteractive apt upgrade -qy"
-
-#echo "===========add static route to initramfs via hook to add default routes due to  initramfs DHCP bug ========="
-# removed
 
 echo "======= update initramfs =========="
 chroot_execute "update-initramfs -u -k all"
@@ -513,6 +467,9 @@ chroot_execute "echo $v_rpool_name/tmp /tmp zfs nodev,relatime 0 0 >> /etc/fstab
 echo "========= add swap, if defined"
 [[ $v_swap_size -gt 0 ]] && chroot_execute "echo /dev/zvol/$v_rpool_name/swap none swap discard 0 0 >> /etc/fstab" || true
 chroot_execute "echo RESUME=none > /etc/initramfs-tools/conf.d/resume"
+
+echo "======= unmounting filesystems and zfs pools =========="
+cp $c_install_log "$v_zfs_mount_dir/root/zfs-install.log"
 
 echo "======= unmounting filesystems and zfs pools =========="
 unmount_and_export_fs
