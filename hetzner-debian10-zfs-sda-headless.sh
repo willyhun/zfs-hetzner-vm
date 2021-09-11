@@ -121,7 +121,7 @@ function initial_load_debian_zed_cache {
 
   chroot_execute "pkill zed"
 
-  sed -Ei 's|/$c_zfs_mount_dir/?|/|g' $c_zfs_mount_dir/etc/zfs/zfs-list.cache/rpool
+  sed -Ei "s|/${c_zfs_mount_dir}/?|/|g" ${c_zfs_mount_dir}/etc/zfs/zfs-list.cache/rpool
 }
 
 
@@ -402,18 +402,18 @@ chroot_execute "rm -f /etc/localtime /etc/timezone"
 chroot_execute "DEBIAN_FRONTEND=noninteractive dpkg-reconfigure tzdata -f noninteractive "
 
 echo "======= installing latest kernel============="
-chroot_execute "DEBIAN_FRONTEND=noninteractive apt install --yes -t buster-backports linux-image${v_kernel_variant}-amd64 linux-headers${v_kernel_variant}-amd64"
+chroot_execute "DEBIAN_FRONTEND=noninteractive apt install -yq -t buster-backports linux-image${v_kernel_variant}-amd64 linux-headers${v_kernel_variant}-amd64"
  
 echo "======= installing aux packages =========="
-chroot_execute "DEBIAN_FRONTEND=noninteractive apt install --yes man wget curl software-properties-common nano htop gnupg"
+chroot_execute "DEBIAN_FRONTEND=noninteractive apt install -yq man wget curl software-properties-common nano htop gnupg"
 
 echo "======= installing zfs packages =========="
 chroot_execute 'echo "zfs-dkms zfs-dkms/note-incompatible-licenses note true" | debconf-set-selections'
 
-chroot_execute "DEBIAN_FRONTEND=noninteractive apt install --yes -t buster-backports zfs-initramfs zfs-dkms zfsutils-linux"
+chroot_execute "DEBIAN_FRONTEND=noninteractive apt install -yq -t buster-backports zfs-initramfs zfs-dkms zfsutils-linux"
 
 echo "======= installing OpenSSH and network tooling =========="
-chroot_execute "DEBIAN_FRONTEND=noninteractive apt install --yes openssh-server net-tools"
+chroot_execute "DEBIAN_FRONTEND=noninteractive apt install -yq openssh-server net-tools"
 
 echo "======= setup OpenSSH  =========="
 mkdir -p "$c_zfs_mount_dir/root/.ssh/"
