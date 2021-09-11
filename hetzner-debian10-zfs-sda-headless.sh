@@ -97,13 +97,13 @@ function initial_load_debian_zed_cache {
 
   local success=0
 
-  if [[ ! -e /mnt/etc/zfs/zfs-list.cache/rpool ]] || [[ -e /mnt/etc/zfs/zfs-list.cache/rpool && (( $(ls -l /mnt/etc/zfs/zfs-list.cache/rpool 2> /dev/null | cut -d ' ' -f 5) == 0 )) ]]; then
+  if [[ ! -e $c_zfs_mount_dir/etc/zfs/zfs-list.cache/rpool ]] || [[ -e $c_zfs_mount_dir/etc/zfs/zfs-list.cache/rpool && (( $(ls -l /$c_zfs_mount_dir/etc/zfs/zfs-list.cache/rpool 2> /dev/null | cut -d ' ' -f 5) == 0 )) ]]; then
     chroot_execute "zfs set canmount=noauto rpool"
 
     SECONDS=0
 
     while (( SECONDS++ <= 120 )); do
-      if [[ -e /mnt/etc/zfs/zfs-list.cache/rpool ]] && (( "$(ls -l /mnt/etc/zfs/zfs-list.cache/rpool | cut -d ' ' -f 5)" > 0 )); then
+      if [[ -e $c_zfs_mount_dir/etc/zfs/zfs-list.cache/rpool ]] && (( "$(ls -l $c_zfs_mount_dir/etc/zfs/zfs-list.cache/rpool | cut -d ' ' -f 5)" > 0 )); then
         success=1
         break
       else
@@ -121,7 +121,7 @@ function initial_load_debian_zed_cache {
 
   chroot_execute "pkill zed"
 
-  sed -Ei 's|/mnt/?|/|g' /mnt/etc/zfs/zfs-list.cache/rpool
+  sed -Ei 's|/$c_zfs_mount_dir/?|/|g' $c_zfs_mount_dir/etc/zfs/zfs-list.cache/rpool
 }
 
 
@@ -475,7 +475,6 @@ if [[ $v_encrypt_rpool == "1" ]]; then
   chroot_execute "ssh-keygen -p -i -m pem -N '' -f /etc/ssh/ssh_host_ecdsa_key_temp"
   chroot_execute "/usr/lib/dropbear/dropbearconvert openssh dropbear /etc/ssh/ssh_host_ecdsa_key_temp /etc/dropbear-initramfs/dropbear_ecdsa_host_key"
   chroot_execute "rm -rf /etc/ssh/ssh_host_ecdsa_key_temp"
-  rm -rf "$c_zfs_mount_dir/etc/ssh/ssh_host_ecdsa_key_temp"
 
   rm -rf "$c_zfs_mount_dir/etc/dropbear-initramfs/dropbear_dss_host_key"
 fi 
