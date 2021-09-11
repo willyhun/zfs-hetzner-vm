@@ -121,7 +121,7 @@ function initial_load_debian_zed_cache {
 
   chroot_execute "pkill zed"
 
-  sed -Ei "s|/${c_zfs_mount_dir}/?|/|g" ${c_zfs_mount_dir}/etc/zfs/zfs-list.cache/rpool
+  sed -Ei "s|${c_zfs_mount_dir}/?|/|g" ${c_zfs_mount_dir}/etc/zfs/zfs-list.cache/rpool
 }
 
 
