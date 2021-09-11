@@ -357,7 +357,7 @@ echo "======= setting locale, console and language =========="
 chroot_execute "apt install --yes -qq locales debconf-i18n apt-utils"
 sed -i 's/# en_US.UTF-8/en_US.UTF-8/' "$c_zfs_mount_dir/etc/locale.gen"
 
-chroot_execute 'cat <<CONF | debconf-set-selections
+chroot_execute "cat <<CONF | debconf-set-selections
 locales locales/default_environment_locale      select  en_US.UTF-8
 keyboard-configuration  keyboard-configuration/store_defaults_in_debconf_db     boolean true
 keyboard-configuration  keyboard-configuration/variant  select  English (US)
@@ -384,9 +384,12 @@ console-setup   console-setup/fontsize  string  8x16
 console-setup   console-setup/charmap47 select  UTF-8
 console-setup   console-setup/fontsize-text47   select  8x16
 console-setup   console-setup/codesetcode       string  Uni2
-tzdata tzdata/Areas select "${v_tz_area}"
-tzdata tzdata/Zones/Europe select "${v_tz_city}"
-CONF'
+tzdata tzdata/Areas select ${v_tz_area}  
+tzdata tzdata/Zones/Europe select ${v_tz_city} 
+CONF"
+
+#chroot_execute echo "tzdata tzdata/Areas select ${v_tz_area}"  | debconf-set-selections
+#chroot_execute echo "tzdata tzdata/Zones/Europe select ${v_tz_city}" | debconf-set-selections
 
 chroot_execute "DEBIAN_FRONTEND=noninteractive dpkg-reconfigure locales -f noninteractive"
 echo -e "LC_ALL=en_US.UTF-8\nLANG=en_US.UTF-8\n" >> "$c_zfs_mount_dir/etc/environment"
