@@ -469,10 +469,10 @@ echo "========= add swap, if defined"
 [[ $v_swap_size -gt 0 ]] && chroot_execute "echo /dev/zvol/$v_rpool_name/swap none swap discard 0 0 >> /etc/fstab" || true
 chroot_execute "echo RESUME=none > /etc/initramfs-tools/conf.d/resume"
 
-echo "======= unmounting filesystems and zfs pools =========="
+echo "======= save install log =========="
 cp $c_install_log "$v_zfs_mount_dir/root/zfs-install.log"
 
-echo "======= save install log =========="
+echo "======= unmounting filesystems and zfs pools =========="
 unmount_and_export_fs
 
 echo "======== setup complete, rebooting ==============="
