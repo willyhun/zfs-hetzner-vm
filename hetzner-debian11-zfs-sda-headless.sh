@@ -184,7 +184,7 @@ echo "======= installing zfs on rescue system =========="
   wget -qO - https://willyhun.github.io/debian-zfs/zfsrepo_key.gpg  | apt-key add -
   echo 'deb [arch=amd64] https://willyhun.github.io/debian-zfs buster main' > /etc/apt/sources.list.d/zfs-experimental.list
   apt update
-  apt install --yes zfs-dkms zfs 
+  apt install --yes zfs-dkms zfs dkms
   apt install --yes -t buster-backports libelf-dev
   modprobe zfs
 
