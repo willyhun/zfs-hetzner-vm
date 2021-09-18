@@ -27,7 +27,7 @@ v_zfs_mount_dir=/zfstarget
 [[ -x ./hetzner_config.sh ]] && source hetzner_config.sh
 
 # destination system definition
-[[ -z $d_release ]] && d_release=$default_release
+[[ -z "$d_release" ]] && d_release=$default_release
 # Variables
 v_extra_dist=""
 v_release=$d_release
