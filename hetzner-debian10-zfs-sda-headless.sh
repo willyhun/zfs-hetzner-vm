@@ -5,7 +5,22 @@ set -o errexit
 set -o pipefail
 set -o nounset
 
+# destination system definition
+d_release="buster"
 # Variables
+v_extra_dist=""
+v_release=$d_release
+if [[ "buster" == $d_release ]] 
+  then
+    v_release_security="buster/updates"
+    v_extra_dist="buster-backports"
+elif [[ "bullseye" == $d_release ]] 
+  then
+    v_release_security="bullseye-security"
+else
+  echo "unsupported release"
+  exit 1
+fi 
 v_bpool_name="bpool"
 v_bpool_tweaks="-o ashift=12 -O compression=lz4"
 v_rpool_name="rpool"
@@ -267,7 +282,7 @@ if [[ $v_swap_size -gt 0 ]]; then
 fi
 
 echo "======= setting up initial system packages =========="
-debootstrap --arch=amd64 buster "$v_zfs_mount_dir" "$c_deb_packages_repo" 
+debootstrap --arch=amd64 $v_release "$v_zfs_mount_dir" "$c_deb_packages_repo" 
 
 zfs set devices=off "$v_rpool_name"
 
@@ -311,16 +326,16 @@ done
 
 echo "======= setting apt repos =========="
 cat > "$v_zfs_mount_dir/etc/apt/sources.list" <<CONF
-deb [arch=amd64] $c_deb_packages_repo buster main contrib non-free
-deb [arch=amd64] $c_deb_packages_repo buster-updates main contrib non-free
-deb [arch=amd64] $c_deb_packages_repo buster-backports main contrib non-free
-deb [arch=amd64] $c_deb_security_repo buster/updates main contrib non-free
+deb [arch=amd64] $c_deb_packages_repo $v_release main contrib non-free
+deb [arch=amd64] $c_deb_packages_repo ${v_release}-updates main contrib non-free
+deb [arch=amd64] $c_deb_packages_repo ${v_release}-backports main contrib non-free
+deb [arch=amd64] $c_deb_security_repo $v_release_security main contrib non-free
 CONF
 
-chroot_execute "DEBIAN_FRONTEND=noninteractive apt -qy update"
+chroot_execute "DEBIAN_FRONTEND=noninteractive apt -yq update"
 
 echo "======= setting locale, console and language =========="
-chroot_execute "DEBIAN_FRONTEND=noninteractive  apt install --yes -qq locales debconf-i18n apt-utils"
+chroot_execute "DEBIAN_FRONTEND=noninteractive apt install --yes -qq locales debconf-i18n apt-utils"
 sed -i 's/# en_US.UTF-8/en_US.UTF-8/' "$v_zfs_mount_dir/etc/locale.gen"
 
 chroot_execute "cat <<CONF | debconf-set-selections
@@ -365,7 +380,7 @@ chroot_execute "rm -f /etc/localtime /etc/timezone"
 chroot_execute "DEBIAN_FRONTEND=noninteractive dpkg-reconfigure tzdata -f noninteractive "
 
 echo "======= installing latest kernel============="
-chroot_execute "DEBIAN_FRONTEND=noninteractive apt install -yq -t buster-backports linux-image${v_kernel_variant}-amd64 linux-headers${v_kernel_variant}-amd64"
+chroot_execute "DEBIAN_FRONTEND=noninteractive apt install -yq $v_extra_dist linux-image${v_kernel_variant}-amd64 linux-headers${v_kernel_variant}-amd64"
  
 echo "======= installing aux packages =========="
 chroot_execute "DEBIAN_FRONTEND=noninteractive apt install -yq man wget curl software-properties-common nano htop gnupg"
@@ -373,7 +388,7 @@ chroot_execute "DEBIAN_FRONTEND=noninteractive apt install -yq man wget curl sof
 echo "======= installing zfs packages =========="
 chroot_execute 'echo "zfs-dkms zfs-dkms/note-incompatible-licenses note true" | debconf-set-selections'
 
-chroot_execute "DEBIAN_FRONTEND=noninteractive apt install -yq -t buster-backports zfs-initramfs zfs-dkms zfsutils-linux"
+chroot_execute "DEBIAN_FRONTEND=noninteractive apt install -yq $v_extra_dist zfs-initramfs zfs-dkms zfsutils-linux"
 
 echo "======= installing OpenSSH and network tooling =========="
 chroot_execute "DEBIAN_FRONTEND=noninteractive apt install -yq openssh-server net-tools"
