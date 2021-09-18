@@ -180,13 +180,18 @@ done
 
 echo "======= installing zfs on rescue system =========="
   echo "zfs-dkms zfs-dkms/note-incompatible-licenses note true" | debconf-set-selections
+  # They've become very kind which broke everything, wipe it 
+  for zfs_file in  zfs ztest zstreamdump zstream zpool zinject zhack zgenhostid zfs_ids_to_path zed zdb fsck.zfs
+    do
+      [[ -x /usr/local/sbin/$zfs_file ]] && rm /usr/local/sbin/$zfs_file
+    done
+  # accept the terms 
+  echo "zfs-dkms zfs-dkms/note-incompatible-licenses note true" | debconf-set-selections
 
   wget -qO - https://willyhun.github.io/debian-zfs/zfsrepo_key.gpg  | apt-key add -
   echo 'deb [arch=amd64] https://willyhun.github.io/debian-zfs zfs-backport main' > /etc/apt/sources.list.d/zfs-experimental.list
   apt update
- # apt install --yes -t buster-backports dkms
   apt install --yes --no-install-recommends -t zfs-backport zfs-dkms zfsutils-linux 
- # apt install --yes -t buster-backports libelf-dev
   modprobe zfs
 
 echo "======= partitioning the disk =========="
