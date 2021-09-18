@@ -182,9 +182,10 @@ echo "======= installing zfs on rescue system =========="
   echo "zfs-dkms zfs-dkms/note-incompatible-licenses note true" | debconf-set-selections
 
   wget -qO - https://willyhun.github.io/debian-zfs/zfsrepo_key.gpg  | apt-key add -
-  echo 'deb [arch=amd64] https://willyhun.github.io/debian-zfs buster main' > /etc/apt/sources.list.d/zfs-experimental.list
+  echo 'deb [arch=amd64] https://willyhun.github.io/debian-zfs zfs-backport main' > /etc/apt/sources.list.d/zfs-experimental.list
   apt update
-  apt install --yes zfs-dkms zfs dkms
+ # apt install --yes -t buster-backports dkms
+  apt install --yes -t zfs-backport zfs-dkms zfsutils-linux 
   apt install --yes -t buster-backports libelf-dev
   modprobe zfs
 
