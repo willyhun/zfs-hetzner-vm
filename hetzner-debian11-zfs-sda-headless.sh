@@ -28,7 +28,6 @@ c_deb_security_repo=http://mirror.hetzner.de/debian/security
 
 c_log_dir=$(dirname "$(mktemp)")/zfs-hetzner-vm
 c_install_log=$c_log_dir/install.log
-c_lsb_release_log=$c_log_dir/lsb_release.log
 
 function activate_debug {
   mkdir -p "$c_log_dir"
@@ -182,11 +181,11 @@ done
 echo "======= installing zfs on rescue system =========="
   echo "zfs-dkms zfs-dkms/note-incompatible-licenses note true" | debconf-set-selections
 
-  wget -O - https://terem42.github.io/zfs-debian/apt_pub.gpg | apt-key add -
-  echo 'deb https://terem42.github.io/zfs-debian/public zfs-debian-experimental main' > /etc/apt/sources.list.d/zfs-experimental.list
+  wget -qO - https://willyhun.github.io/debian-zfs/zfsrepo_key.gpg  | apt-key add -
+  echo 'deb [arch=amd64] https://willyhun.github.io/debian-zfs buster main' > /etc/apt/sources.list.d/zfs-experimental.list
   apt update
-  apt install -t zfs-debian-experimental --yes zfs-dkms zfsutils-linux 
-  apt install --yes -t buster-backports libelf-dev zfs-dkms
+  apt install --yes zfs-dkms zfs 
+  apt install --yes -t buster-backports libelf-dev
   modprobe zfs
 
 echo "======= partitioning the disk =========="
