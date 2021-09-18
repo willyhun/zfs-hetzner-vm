@@ -186,7 +186,7 @@ echo "======= installing zfs on rescue system =========="
   apt update
  # apt install --yes -t buster-backports dkms
   apt install --yes -t zfs-backport zfs-dkms zfsutils-linux 
-  apt install --yes -t buster-backports libelf-dev
+ # apt install --yes -t buster-backports libelf-dev
   modprobe zfs
 
 echo "======= partitioning the disk =========="
