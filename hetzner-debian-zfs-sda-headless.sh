@@ -5,22 +5,9 @@ set -o errexit
 set -o pipefail
 set -o nounset
 
-# destination system definition
-d_release="buster"
-# Variables
-v_extra_dist=""
-v_release=$d_release
-if [[ "buster" == $d_release ]] 
-  then
-    v_release_security="buster/updates"
-    v_extra_dist="buster-backports"
-elif [[ "bullseye" == $d_release ]] 
-  then
-    v_release_security="bullseye-security"
-else
-  echo "unsupported release"
-  exit 1
-fi 
+# default release
+default_release="buster"
+# variable defaults can be overdefined in hetzner_config.sh
 v_bpool_name="bpool"
 v_bpool_tweaks="-o ashift=12 -O compression=lz4"
 v_rpool_name="rpool"
@@ -36,6 +23,25 @@ v_tz_city="Berlin"
 v_selected_disk="/dev/sda"
 v_swap_size=0
 v_zfs_mount_dir=/zfstarget
+
+[[ -x ./hetzner_config.sh ]] && source hetzner_config.sh
+
+# destination system definition
+[[ -z $d_release ]] && d_release=$default_release
+# Variables
+v_extra_dist=""
+v_release=$d_release
+if [[ "buster" == $d_release ]] 
+  then
+    v_release_security="buster/updates"
+    v_extra_dist="buster-backports"
+elif [[ "bullseye" == $d_release ]] 
+  then
+    v_release_security="bullseye-security"
+else
+  echo "unsupported release"
+  exit 1
+fi 
 
 # Constants
 c_deb_packages_repo=http://mirror.hetzner.de/debian/packages
