@@ -185,7 +185,7 @@ echo "======= installing zfs on rescue system =========="
   echo 'deb [arch=amd64] https://willyhun.github.io/debian-zfs zfs-backport main' > /etc/apt/sources.list.d/zfs-experimental.list
   apt update
  # apt install --yes -t buster-backports dkms
-  apt install --yes -t zfs-backport zfs-dkms zfsutils-linux 
+  apt install --yes --no-install-recommends -t zfs-backport zfs-dkms zfsutils-linux 
  # apt install --yes -t buster-backports libelf-dev
   modprobe zfs
 
