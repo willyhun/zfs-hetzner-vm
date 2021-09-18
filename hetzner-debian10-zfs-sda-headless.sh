@@ -179,13 +179,20 @@ for kver in $(find /lib/modules/* -maxdepth 0 -type d | grep -v "$(uname -r)" | 
 done
 
 echo "======= installing zfs on rescue system =========="
+echo "======= installing zfs on rescue system =========="
+  echo "zfs-dkms zfs-dkms/note-incompatible-licenses note true" | debconf-set-selections
+  # They've become very kind which broke everything, wipe it 
+  for zfs_file in  zfs ztest zstreamdump zstream zpool zinject zhack zgenhostid zfs_ids_to_path zed zdb fsck.zfs
+    do
+      [[ -x /usr/local/sbin/$zfs_file ]] && rm /usr/local/sbin/$zfs_file
+    done
+  # accept the terms 
   echo "zfs-dkms zfs-dkms/note-incompatible-licenses note true" | debconf-set-selections
 
-  wget -O - https://terem42.github.io/zfs-debian/apt_pub.gpg | apt-key add -
-  echo 'deb https://terem42.github.io/zfs-debian/public zfs-debian-experimental main' > /etc/apt/sources.list.d/zfs-experimental.list
+  wget -qO - https://willyhun.github.io/debian-zfs/zfsrepo_key.gpg  | apt-key add -
+  echo 'deb [arch=amd64] https://willyhun.github.io/debian-zfs zfs-backport main' > /etc/apt/sources.list.d/zfs-experimental.list
   apt update
-  apt install -t zfs-debian-experimental --yes zfs-dkms zfsutils-linux 
-  apt install --yes -t buster-backports libelf-dev zfs-dkms
+  apt install --yes --no-install-recommends -t zfs-backport zfs-dkms zfsutils-linux 
   modprobe zfs
 
 echo "======= partitioning the disk =========="
