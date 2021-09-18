@@ -179,7 +179,6 @@ for kver in $(find /lib/modules/* -maxdepth 0 -type d | grep -v "$(uname -r)" | 
 done
 
 echo "======= installing zfs on rescue system =========="
-echo "======= installing zfs on rescue system =========="
   echo "zfs-dkms zfs-dkms/note-incompatible-licenses note true" | debconf-set-selections
   # They've become very kind which broke everything, wipe it 
   for zfs_file in  zfs ztest zstreamdump zstream zpool zinject zhack zgenhostid zfs_ids_to_path zed zdb fsck.zfs
