@@ -35,7 +35,7 @@ c_log_dir=$(dirname "$(mktemp)")/zfs-hetzner-vm
 c_install_log=$c_log_dir/install.log
 
 
-[[ -x ./hetzner_config.sh ]] && source hetzner_config.sh
+[[ -e ./hetzner_config.sh ]] && source ./hetzner_config.sh
 
 # destination system definition
 [[ -z "$d_release" ]] && d_release=$default_release
@@ -217,7 +217,7 @@ echo "======= installing zfs on rescue system =========="
   # They've become very kind which broke everything, wipe it 
   for zfs_file in  zfs ztest zstreamdump zstream zpool zinject zhack zgenhostid zfs_ids_to_path zed zdb fsck.zfs
     do
-      [[ -x /usr/local/sbin/$zfs_file ]] && rm /usr/local/sbin/$zfs_file
+      [[ -e /usr/local/sbin/$zfs_file ]] && rm /usr/local/sbin/$zfs_file
     done
   # accept the terms 
   echo "zfs-dkms zfs-dkms/note-incompatible-licenses note true" | debconf-set-selections
