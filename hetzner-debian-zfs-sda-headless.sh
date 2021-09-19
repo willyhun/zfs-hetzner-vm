@@ -24,6 +24,16 @@ v_tz_city="Berlin"
 v_selected_disk="/dev/sda"
 v_swap_size=0
 v_zfs_mount_dir=/zfstarget
+v_backports_repo="http://deb.debian.org/debian"
+
+
+# Constants
+c_deb_packages_repo=http://mirror.hetzner.de/debian/packages
+c_deb_security_repo=http://mirror.hetzner.de/debian/security
+
+c_log_dir=$(dirname "$(mktemp)")/zfs-hetzner-vm
+c_install_log=$c_log_dir/install.log
+
 
 [[ -x ./hetzner_config.sh ]] && source hetzner_config.sh
 
@@ -34,10 +44,12 @@ v_extra_dist=""
 v_release=$d_release
 if [[ "buster" == $d_release ]] 
   then
+    v_backports_repo="http://deb.debian.org/debian"
     v_release_security="buster/updates"
 #    v_extra_dist="buster-backports"
 elif [[ "bullseye" == $d_release ]] 
   then
+    v_backports_repo="http://mirror.hetzner.de/debian/packages"
     v_release_security="bullseye-security"
 else
   echo "unsupported release"
@@ -335,7 +347,7 @@ echo "======= setting apt repos =========="
 cat > "$v_zfs_mount_dir/etc/apt/sources.list" <<CONF
 deb [arch=amd64] $c_deb_packages_repo $v_release main contrib non-free
 deb [arch=amd64] $c_deb_packages_repo ${v_release}-updates main contrib non-free
-deb [arch=amd64] $c_deb_packages_repo ${v_release}-backports main contrib non-free
+deb [arch=amd64] $v_backports_repo ${v_release}-backports main contrib non-free
 deb [arch=amd64] $c_deb_security_repo $v_release_security main contrib non-free
 CONF
 
