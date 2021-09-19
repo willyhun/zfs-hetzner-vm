@@ -13,7 +13,7 @@ v_release=$d_release
 if [[ "buster" == $d_release ]] 
   then
     v_release_security="buster/updates"
-    v_extra_dist="buster-backports"
+    v_extra_dist="-t buster-backports"
 elif [[ "bullseye" == $d_release ]] 
   then
     v_release_security="bullseye-security"
