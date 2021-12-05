@@ -365,7 +365,6 @@ ExecStart=/sbin/zfs load-key %I
 [Install]
 WantedBy=zfs-mount.service
 ZCONF
-if 
 
 if [[ ! -z "$v_data_pool_name" ]]; then
 chroot_execute "systemctl enable zfs-load-key@${v_data_pool_name}.service"
