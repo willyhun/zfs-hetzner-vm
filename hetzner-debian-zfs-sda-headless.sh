@@ -349,7 +349,7 @@ CONF
 
 chroot_execute "systemctl enable systemd-networkd.service"
 
-cat << 'ZCONF' > /etc/systemd/system/zfs-load-key@.service
+cat << 'ZCONF' > "${v_zfs_mount_dir}/etc/systemd/system/zfs-load-key@.service"
 [Unit]
 Description=Load ZFS keys
 DefaultDependencies=no
