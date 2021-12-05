@@ -324,6 +324,15 @@ ff02::2 ip6-allrouters
 ff02::3 ip6-allhosts
 CONF
 
+v_float_ips=""
+
+if [[ ! -z "$v_float_ipv4" ]]; then
+v_float_ips="Address=${v_float_ipv4}"$'\n'
+fi 
+if [[ ! -z "$v_float_ipv6"  ]]; then
+v_float_ips="${v_float_ips}Address=${v_float_ipv6}"$'\n'
+fi
+
 ip6addr_prefix=$(ip -6 a s | grep -E "inet6.+global" | sed -nE 's/.+inet6\s(([0-9a-z]{1,4}:){4,4}).+/\1/p')
 
 cat <<CONF > "${v_zfs_mount_dir}/etc/systemd/network/10-eth0.network"
@@ -334,26 +343,8 @@ Name=eth0
 DHCP=ipv4
 Address=${ip6addr_prefix}:1/64
 Gateway=fe80::1
-CONF
-
-v_float_ips=""
-
-if [[ ! -z "$v_float_ipv4" ]]; then
-v_float_ips="Address=${v_float_ipv4}"$'\n'
-fi 
-if [[ ! -z "$v_float_ipv6"  ]]; then
-v_float_ips="${v_float_ips}Address=${v_float_ipv6}"$'\n'
-fi
-
-if [[ ! -z "$v_float_ips" ]]; then
-cat <<DCONF > "${v_zfs_mount_dir}/etc/systemd/network/60-float.network"
-[Match]
-Name=eth0:1
-
-[Network]
 ${v_float_ips}
-DCONF
-fi
+CONF
 
 
 chroot_execute "systemctl enable systemd-networkd.service"
