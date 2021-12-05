@@ -21,6 +21,8 @@ v_encrypt_rpool="1"             # 0=false, 1=true
 v_passphrase="changeme"
 v_tz_area="Europe"
 v_tz_city="Berlin"
+v_float_ipv4=""
+v_float_ipv6=""
 v_selected_disk="/dev/sda"
 v_swap_size=0
 v_zfs_mount_dir=/zfstarget
@@ -333,6 +335,27 @@ DHCP=ipv4
 Address=${ip6addr_prefix}:1/64
 Gateway=fe80::1
 CONF
+
+v_float_ips=""
+
+if [[ $v_float_ipv4 -gt 0 ]]; then
+v_float_ips="Address=$v_float_ipv4"$'\n'
+fi 
+if [[ $v_float_ipv6 -gt 0 ]]; then
+v_float_ips="${v_float_ips}Address=$v_float_ipv6"$'\n'
+fi
+
+if [[ $v_float_ips -gt 0 ]]; then
+cat <<DCONF > "${v_zfs_mount_dir}/etc/systemd/network/60-float.network"
+[Match]
+Name=eth0:1
+
+[Network]
+${v_float_ips}
+DCONF
+fi
+
+
 chroot_execute "systemctl enable systemd-networkd.service"
 
 
