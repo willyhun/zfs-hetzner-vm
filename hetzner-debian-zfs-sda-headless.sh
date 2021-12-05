@@ -327,10 +327,10 @@ CONF
 v_float_ips=""
 
 if [[ ! -z "$v_float_ipv4" ]]; then
-v_float_ips="Address=${v_float_ipv4}"$'\n'
+v_float_ips="Address=${v_float_ipv4}/32"$'\n'
 fi 
 if [[ ! -z "$v_float_ipv6"  ]]; then
-v_float_ips="${v_float_ips}Address=${v_float_ipv6}"$'\n'
+v_float_ips="${v_float_ips}Address=${v_float_ipv6}/64"$'\n'
 fi
 
 ip6addr_prefix=$(ip -6 a s | grep -E "inet6.+global" | sed -nE 's/.+inet6\s(([0-9a-z]{1,4}:){4,4}).+/\1/p')
