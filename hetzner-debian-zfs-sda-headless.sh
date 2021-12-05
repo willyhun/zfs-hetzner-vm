@@ -349,6 +349,27 @@ CONF
 
 chroot_execute "systemctl enable systemd-networkd.service"
 
+cat << 'ZCONF' > /etc/systemd/system/zfs-load-key@.service
+[Unit]
+Description=Load ZFS keys
+DefaultDependencies=no
+Before=zfs-mount.service
+After=zfs-import.target
+Requires=zfs-import.target
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/sbin/zfs load-key %I
+
+[Install]
+WantedBy=zfs-mount.service
+ZCONF
+if 
+
+if [[ ! -z "$v_data_pool_name" ]]; then
+chroot_execute "systemctl enable zfs-load-key@${v_data_pool_name}.service"
+fi
 
 cp /etc/resolv.conf $v_zfs_mount_dir/etc/resolv.conf
 
@@ -366,6 +387,7 @@ deb [arch=amd64] $c_deb_security_repo $v_release_security main contrib non-free
 CONF
 
 chroot_execute "DEBIAN_FRONTEND=noninteractive apt -yq update"
+chroot_execute "systemctl enable systemd-resolved.service"
 
 echo "======= setting locale, console and language =========="
 chroot_execute "DEBIAN_FRONTEND=noninteractive apt install --yes -qq locales debconf-i18n apt-utils"
