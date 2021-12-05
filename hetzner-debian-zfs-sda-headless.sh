@@ -338,14 +338,14 @@ CONF
 
 v_float_ips=""
 
-if [[ "$v_float_ipv4" -gt 0 ]]; then
+if [[ ! -z "$v_float_ipv4" ]]; then
 v_float_ips="Address=${v_float_ipv4}"$'\n'
 fi 
-if [[ $v_float_ipv6 -gt 0 ]]; then
+if [[ ! -z "$v_float_ipv6"  ]]; then
 v_float_ips="${v_float_ips}Address=${v_float_ipv6}"$'\n'
 fi
 
-if [[ "$v_float_ips" -gt 0 ]]; then
+if [[ ! -z "$v_float_ips" ]]; then
 cat <<DCONF > "${v_zfs_mount_dir}/etc/systemd/network/60-float.network"
 [Match]
 Name=eth0:1
