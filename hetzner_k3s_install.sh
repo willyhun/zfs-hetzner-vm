@@ -10,8 +10,10 @@
 # prepare environment
 DATADRIVE="rpool/data"
 
-echo "Preparing ${DATADRIVE}/rancherinstall install env:"
+# install git
+apt-get -y install git
 
+echo "Preparing ${DATADRIVE}/rancherinstall install env:"
 mkdir -p /rancherstorage
 mkdir -p /rancherinstall
 mkdir -p /var/lib/kubelet
