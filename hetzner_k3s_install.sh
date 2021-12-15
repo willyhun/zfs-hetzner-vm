@@ -1,4 +1,11 @@
 #!/bin/bash
+# download 
+# curl -sfL -o hetzner_k3s_install.sh https://raw.githubusercontent.com/willyhun/zfs-hetzner-vm/headless/hetzner_k3s_install.s
+# execute:
+# bash  hetzner_k3s_install.sh
+# first time install:
+# bash  hetzner_k3s_install.sh first
+ 
 
 # prepare environment
 DATADRIVE="rpool/data"
@@ -104,3 +111,12 @@ echo "Mount the permanent storage, start k3s with the permanent env:"
 mount -a 
 # start the system
 systemctl start k3s 
+
+# hint for the cleanup
+# systemctl stop k3s
+# k3s-killall.sh
+# umount /var/lib/rancher
+# umount roor/lib/kubelet
+# umount /etc/rancher
+# umount /rancherstorage
+# k3s-uninstall.sh
