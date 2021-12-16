@@ -1,0 +1,303 @@
+# this doc available
+# curl -sfL -o kube_env_install.txt https://raw.githubusercontent.com/willyhun/zfs-hetzner-vm/headless/kube_env_install.txt
+
+# alternative you can create these at install time too with:  -n NAMESPACE --create-namespace
+kubectl create namespace metallb-system 
+kubectl create namespace ingress-nginx 
+kubectl create namespace cert-manager
+
+# get metallb values
+helm show values metallb/metallb > metallb.values
+# add the floating ip (only ipv4 supported at the mo) hetzner is l2 supported
+
+configInline:
+  address-pools:
+   - name: default
+     protocol: layer2
+     addresses:
+     - 49.12.113.58/32
+# test
+helm install metallb metallb/metallb -n metallb-system -f metallb.values --dry-run --debug
+# install
+helm install metallb metallb/metallb -n metallb-system -f metallb.values 
+# get ingress values (default no changes required only externalTrafficPolicy set to Local)
+
+helm show values ingress-nginx/ingress-nginx > ingress.values
+
+# test ingress
+helm install ingress-nginx ingress-nginx/ingress-nginx -n ingress-nginx -f ingress.values --dry-run --debug
+
+# install ingress
+helm install ingress-nginx ingress-nginx/ingress-nginx -n ingress-nginx -f ingress.values
+
+# logout to get set everything
+# login
+# install cert-manager plugin
+kubectl krew install cert-manager
+
+# get cert-manager valuses 
+helm show values jetstack/cert-manager > cert-manager.values                                                                                                              
+
+# test instaéé  "--version v1.5.3" removed because getting outdated
+helm install  cert-manager jetstack/cert-manager -n cert-manager   --set installCRDs=true -f cert-manager.values --dry-run --debug      
+
+# letsencrypt_staging_clusterissuer.yaml  content:
+cat <<EOF > letsencrypt_staging_clusterissuer.yaml 
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: letsencrypt-staging
+spec:
+  acme:
+    # The ACME server URL
+    server: https://acme-staging-v02.api.letsencrypt.org/directory
+    # Email address used for ACME registration
+    email: k3s-staging-hztest@willy.hu
+    # Name of a secret used to store the ACME account private key
+    privateKeySecretRef:
+      name: letsencrypt-staging
+    # Enable the HTTP-01 challenge provider
+    solvers:
+    - http01:
+        ingress:
+          class:  nginx
+EOF
+
+cat <<EOF > letsencrypt_prod_clusterissuer.yaml 
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: letsencrypt-prod
+spec:
+  acme:
+    email: hostmaster@dunanet.hu # replace this
+    privateKeySecretRef:
+      name: prod-issuer-account-key
+    server: https://acme-v02.api.letsencrypt.org/directory
+    solvers:
+      - http01:
+          ingress:
+            class: nginx
+        selector: {}
+EOF
+
+# install 
+kubectl apply -f letsencrypt_staging_clusterissuer.yaml
+kubectl apply -f letsencrypt_prod_clusterissuer.yaml
+
+# add manual storageclass
+
+cat <<EOF >  storageclass-manual.yml
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: manual
+provisioner: rancher.io/local-path
+volumeBindingMode: Immediate
+reclaimPolicy: Retain
+EOF
+
+kubectl apply -f storageclass-manual.yml
+# add services 
+# nextcloud
+
+# add repos
+# add nextcloud repo
+helm repo add nextcloud https://nextcloud.github.io/helm/
+# add bitnami repo 
+helm repo add bitnami https://charts.bitnami.com/bitnami
+
+# update the repo index
+helm repo update
+
+# check and edit the files important, namespaces, dirs, 
+# if you go with the current settings 
+kubectl create namespace nextcloud
+
+# define permanent storage:
+#DATADRIVE="zdata"
+DATADRIVE="rpool/data"
+zfs create -o mountpoint=/rancherpv  ${DATADRIVE}/rancherpv
+
+mkdir -p /rancherpv/
+mkdir -p /rancherpv/nextcloud
+mkdir -p /rancherpv/nextcloud/nextcloudredis
+mkdir -p /rancherpv/nextcloud/nextcloudsql
+mkdir -p /rancherpv/nextcloud/nextclouddata
+mkdir -p /rancherpv/nextcloud/nextcloud
+# redis
+cat <<EOF >  pv-pvc-hostpath-nextcloud-redis.yml
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  namespace: nextcloud
+  name: nextcloud-pv-redis
+  labels:
+    type: local
+spec:
+  storageClassName: manual
+  capacity:
+    storage: 30Gi
+  accessModes:
+    - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  hostPath:
+    path: "/rancherpv/nextcloud/nextcloudredis"
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: nextcloud-pvc-redis
+  namespace: nextcloud
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: manual
+  resources:
+    requests:
+      storage: 10Gi
+  volumeName: nextcloud-pv-redis
+EOF
+
+cat <<EOF >  pv-pvc-hostpath-nextcloud-sql.yml
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  namespace: nextcloud
+  name: nextcloud-pv-sql
+  labels:
+    type: local
+spec:
+  storageClassName: manual
+  capacity:
+    storage: 30Gi
+  accessModes:
+    - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  hostPath:
+    path: "/rancherpv/nextcloud/nextcloudsql"
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: nextcloud-pvc-sql
+  namespace: nextcloud
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: manual
+  resources:
+    requests:
+      storage: 10Gi
+  volumeName: nextcloud-pv-sql
+EOF
+
+cat <<EOF >  pv-pvc-hostpath-nextcloud.yml
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  namespace: nextcloud
+  name: nextcloud-pv
+  labels:
+    type: local
+spec:
+  storageClassName: manual
+  capacity:
+    storage: 100Gi
+  accessModes:
+    - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  hostPath:
+    path: "/rancherpv/nextcloud/nextcloud"
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: nextcloud-pvc
+  namespace: nextcloud
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: manual
+  resources:
+    requests:
+      storage: 100Gi
+  volumeName: nextcloud-pv
+EOF
+
+cat <<EOF >  pv-pvc-hostpath-nextcloud-data.yml
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  namespace: nextcloud
+  name: nextcloud-pv-data
+  labels:
+    type: local
+spec:
+  storageClassName: manual
+  capacity:
+    storage: 100Gi
+  accessModes:
+    - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  hostPath:
+    path: "/rancherpv/nextcloud/nextclouddata"
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: nextcloud-pvc-data
+  namespace: nextcloud
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: manual
+  resources:
+    requests:
+      storage: 100Gi
+  volumeName: nextcloud-pv-data
+EOF
+
+# apply the storage config (if you checked carefully)
+kubectl apply -f pv-pvc-hostpath-nextcloud.yml
+kubectl apply -f pv-pvc-hostpath-nextcloud-data.yml
+kubectl apply -f pv-pvc-hostpath-nextcloud-sql.yml
+kubectl apply -f pv-pvc-hostpath-nextcloud-redis.yml
+
+# add user
+adduser kuser 
+# chown kuser.kuser datasharedir sqldir redisdir
+# example
+chown -R 1001.1001 /rancherpv/nextcloud/nextcloud /rancherpv/nextcloud/nextcloudsql /rancherpv/nextcloud/nextcloudredis /rancherpv/nextcloud/nextclouddata
+
+
+# configure nextcloud
+# get values adjust
+
+helm show values nextcloud/nextcloud > nextcloud.values.yml
+# current tested values available at
+# curl -sfL -o nextcloud.values.tested.yml https://raw.githubusercontent.com/willyhun/zfs-hetzner-vm/headless/nextcloud.values.tested.yml
+# test install 
+helm install nextcloud nextcloud/nextcloud --namespace nextcloud --values nextcloud.values.yml --dry-run --debug
+
+# install 
+helm install nextcloud nextcloud/nextcloud --namespace nextcloud --values nextcloud.values.yml
+
+
+# extra config.php settings 
+  'trusted_domains' => 
+  array (
+    0 => 'localhost',
+    1 => 'cloud.willy.hu',
+    2 => 'cloud.hz.willy.hu'
+  ),
+  'overwrite.cli.url' => 'https://cloud.willy.hu',
+  'overwritehost' => 'cloud.willy.hu',
+  'overwriteprotocol' => 'https',
+  'trusted_proxies' => ['10.42.0.0/24'],
+  'default_phone_region' => 'HU',
+
