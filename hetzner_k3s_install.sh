@@ -11,7 +11,7 @@
 DATADRIVE="rpool/data"
 
 # install git
-apt-get -y install git
+apt-get -y install git rsync
 
 echo "Preparing ${DATADRIVE}/rancherinstall install env:"
 mkdir -p /rancherstorage
