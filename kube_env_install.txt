@@ -292,11 +292,10 @@ helm install nextcloud nextcloud/nextcloud --namespace nextcloud --values nextcl
   'trusted_domains' => 
   array (
     0 => 'localhost',
-    1 => 'cloud.willy.hu',
-    2 => 'cloud.hz.willy.hu'
-  ),
-  'overwrite.cli.url' => 'https://cloud.willy.hu',
-  'overwritehost' => 'cloud.willy.hu',
+    1 => 'nc.willy.hu',
+   ),
+  'overwrite.cli.url' => 'https://nc.willy.hu',
+  'overwritehost' => 'nc.willy.hu',
   'overwriteprotocol' => 'https',
   'trusted_proxies' => ['10.42.0.0/24'],
   'default_phone_region' => 'HU',
@@ -314,7 +313,7 @@ chown 1001.1001 -R /rancherpv/vaultwarden/
 kubectl create namespace vaultwarden 
 
 # create pv/pvc
-cat <<EOF >  pv-pvc-hostpath-nextcloud.yml
+cat <<EOF >  pv-pvc-hostpath-vaultwarden.yml
 apiVersion: v1
 kind: PersistentVolume
 metadata:
