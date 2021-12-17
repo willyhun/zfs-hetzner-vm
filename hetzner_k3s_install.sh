@@ -1,4 +1,8 @@
 #!/bin/bash
+# make sure you have data partition if you have separate disk create if it must
+# sgdisk     -n1:0:0        -t1:BF00 DRIVEPATH
+# and you have the zpool created:
+# zpool create -o ashift=12 -O acltype=posixacl -O compression=lz4 -O dnodesize=auto -O relatime=on -O xattr=sa -O normalization=formD -O encryption=aes-256-gcm -O keylocation=file:///etc/zfs/zdata.key -O keyformat=raw -O mountpoint=/data -f zdata /dev/disk/by-id/scsi-0HC_Volume_15339628-part1
 # download 
 # curl -sfL -o hetzner_k3s_install.sh https://raw.githubusercontent.com/willyhun/zfs-hetzner-vm/headless/hetzner_k3s_install.sh
 # execute:
@@ -11,7 +15,7 @@
 DATADRIVE="rpool/data"
 
 # install git
-apt-get -y install git rsync
+apt-get -y install git rsync gdisk
 
 echo "Preparing ${DATADRIVE}/rancherinstall install env:"
 mkdir -p /rancherstorage
@@ -118,7 +122,7 @@ systemctl start k3s
 # systemctl stop k3s
 # k3s-killall.sh
 # umount /var/lib/rancher
-# umount roor/lib/kubelet
+# umount /var/lib/kubelet
 # umount /etc/rancher
 # umount /rancherstorage
 # k3s-uninstall.sh
