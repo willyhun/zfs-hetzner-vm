@@ -301,3 +301,56 @@ helm install nextcloud nextcloud/nextcloud --namespace nextcloud --values nextcl
   'trusted_proxies' => ['10.42.0.0/24'],
   'default_phone_region' => 'HU',
 
+# vaultwarden
+# get the project
+git clone git@github.com:/willyhun/ansible_k8s_vaultwarden.git
+# install ansible
+sudo apt-get install ansible
+
+# prepare the env
+mkdir  -p /rancherpv/vaultwarden/
+chown 1001.1001 -R /rancherpv/vaultwarden/
+
+kubectl create namespace vaultwarden 
+
+# create pv/pvc
+cat <<EOF >  pv-pvc-hostpath-nextcloud.yml
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  namespace: vaultwarden
+  name: vaultwarden-pv
+  labels:
+    type: local
+spec:
+  storageClassName: manual
+  capacity:
+    storage: 20Gi
+  persistentVolumeReclaimPolicy: Retain
+  accessModes:
+    - ReadWriteOnce
+  hostPath:
+    path: "/rancherpv/vaultwarden"
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: vaultwarden-pvc
+  namespace: vaultwarden
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: manual
+  resources:
+    requests:
+      storage: 15Gi
+  volumeName: vaultwarden-pv    
+EOF
+
+kubectl apply -f pv-pvc-hostpath-vaultwarden.yml                                                                                                                          
+
+# prepare ansible
+mkdir -p .ansible/roles
+cp -a ansible_k8s_vaultwarden/willy_hun.kubernetes-vaultwarden .ansible/roles/
+ansible-playbook ansible_k8s_vaultwarden/ansible_vaultwarden.yaml

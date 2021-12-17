@@ -1,6 +1,6 @@
 #!/bin/bash
 # download 
-# curl -sfL -o hetzner_k3s_install.sh https://raw.githubusercontent.com/willyhun/zfs-hetzner-vm/headless/hetzner_k3s_install.s
+# curl -sfL -o hetzner_k3s_install.sh https://raw.githubusercontent.com/willyhun/zfs-hetzner-vm/headless/hetzner_k3s_install.sh
 # execute:
 # bash  hetzner_k3s_install.sh
 # first time install:
